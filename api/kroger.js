@@ -1,5 +1,5 @@
-const CLIENT_ID     = process.env.VITE_KROGER_CLIENT_ID     || '';
-const CLIENT_SECRET = process.env.VITE_KROGER_CLIENT_SECRET || '';
+const CLIENT_ID     = process.env.VITE_KROGER_CLIENT_ID     || 'aislefive-bbcd2xzm';
+const CLIENT_SECRET = process.env.VITE_KROGER_CLIENT_SECRET || 'CQY6wH8Qa06T2N5QTofVFTYYyeoHtlNXCd6CTV1W';
 
 export default async function handler(req, res) {
   const allQuery = { ...req.query };
