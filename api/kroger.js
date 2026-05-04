@@ -16,6 +16,7 @@ export default async function handler(req, res) {
 
   // Token endpoint: build Basic auth from env vars (avoids header-forwarding issues)
   if (krogerPath === '/v1/connect/oauth2/token') {
+    console.log('[kroger-proxy] token request — CLIENT_ID:', CLIENT_ID ? CLIENT_ID.slice(0, 8) + '…' : 'MISSING');
     const creds = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
     headers['authorization'] = `Basic ${creds}`;
   } else if (req.headers['authorization']) {
@@ -35,7 +36,9 @@ export default async function handler(req, res) {
     }
   }
 
+  console.log('[kroger-proxy]', req.method, url, '→ sending');
   const upstream = await fetch(url, { method: req.method, headers, body });
+  console.log('[kroger-proxy] response status:', upstream.status);
   const text = await upstream.text();
   res.status(upstream.status);
   const ct = upstream.headers.get('content-type');
