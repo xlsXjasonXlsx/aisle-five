@@ -14,26 +14,16 @@ export default async function handler(req, res) {
 
   const headers = {};
 
-  // Token endpoint: build Basic auth from env vars (avoids header-forwarding issues)
+  let body;
+
   if (krogerPath === '/v1/connect/oauth2/token') {
-    console.log('[kroger-proxy] token request — CLIENT_ID:', CLIENT_ID ? CLIENT_ID.slice(0, 8) + '…' : 'MISSING');
+    // Token endpoint: build auth and body directly — rewrite drops POST body
     const creds = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
     headers['authorization'] = `Basic ${creds}`;
-  } else if (req.headers['authorization']) {
-    headers['authorization'] = req.headers['authorization'];
-  }
-
-  // Reconstruct body for POST requests
-  // Vercel's default body parser converts x-www-form-urlencoded into req.body object
-  let body;
-  if (req.method === 'POST' && req.body) {
-    if (typeof req.body === 'object') {
-      body = new URLSearchParams(req.body).toString();
-      headers['content-type'] = 'application/x-www-form-urlencoded';
-    } else {
-      body = String(req.body);
-      if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
-    }
+    headers['content-type'] = 'application/x-www-form-urlencoded';
+    body = 'grant_type=client_credentials&scope=product.compact';
+  } else {
+    if (req.headers['authorization']) headers['authorization'] = req.headers['authorization'];
   }
 
   console.log('[kroger-proxy]', req.method, url, '→ sending');
