@@ -1,1 +1,5 @@
-{}
+{
+  "rewrites": [
+    { "source": "/api/kroger/:path*", "destination": "/api/kroger?__path=:path*" }
+  ]
+}
