@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/kroger-api/:path*",
+      "destination": "https://api-ce.kroger.com/:path*"
+    }
+  ]
+}
