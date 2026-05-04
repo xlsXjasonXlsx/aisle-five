@@ -3,8 +3,15 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  const path = req.url.replace(/^\/api\/kroger/, '');
-  const url = `https://api-ce.kroger.com${path}`;
+  // req.query.path = ['v1', 'connect', 'oauth2', 'token'] etc.
+  const pathParts = req.query.path || [];
+  const pathStr = '/' + pathParts.join('/');
+
+  // Preserve query string (e.g. filter.zipCode=...)
+  const qIdx = req.url.indexOf('?');
+  const qs = qIdx !== -1 ? req.url.slice(qIdx) : '';
+
+  const url = `https://api-ce.kroger.com${pathStr}${qs}`;
 
   const headers = {};
   if (req.headers['authorization']) headers['authorization'] = req.headers['authorization'];
