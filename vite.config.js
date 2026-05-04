@@ -8,10 +8,10 @@ export default defineConfig({
     proxy: {
       // Proxies /kroger-api/* → https://api-ce.kroger.com/*
       // Keeps credentials off the browser origin and avoids CORS issues.
-      '/kroger-api': {
+      '/api/kroger': {
         target: 'https://api-ce.kroger.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/kroger-api/, ''),
+        rewrite: (path) => path.replace(/^\/api\/kroger/, ''),
       },
       '/walmart-api': {
         target: 'https://api.walmart.com',

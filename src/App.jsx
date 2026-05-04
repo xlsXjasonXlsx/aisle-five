@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 
 // ─── Env / Config ──────────────────────────────────────────────────────────
-const KROGER_BASE     = '/kroger-api';
+const KROGER_BASE     = '/api/kroger';
 const CLIENT_ID     = import.meta.env.VITE_KROGER_CLIENT_ID     ?? '';
 const CLIENT_SECRET = import.meta.env.VITE_KROGER_CLIENT_SECRET ?? '';
 const DEMO_MODE     = !CLIENT_ID;
