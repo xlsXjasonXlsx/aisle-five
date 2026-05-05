@@ -931,7 +931,7 @@ export default function App() {
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">Full Name</label>
                   <input type="text" value={profile.name || ''} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))}
-                    placeholder="Jason Hou"
+                    placeholder="Full name"
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                 </div>
                 <div>
@@ -979,7 +979,7 @@ export default function App() {
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">Cardholder Name</label>
                   <input type="text" value={profile.cardName || ''} onChange={e => setProfile(p => ({ ...p, cardName: e.target.value }))}
-                    placeholder="Jason Hou"
+                    placeholder="Full name"
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                 </div>
                 <div>
