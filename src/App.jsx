@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   ShoppingCart, Search, Settings, CheckCircle2, TrendingDown, Store,
   ExternalLink, MapPin, AlertCircle, RefreshCw, Clock, Sparkles, WifiOff,
-  Info, Truck, ChevronDown, ChevronUp,
+  Info, Truck, ChevronDown, ChevronUp, User, CreditCard,
 } from 'lucide-react';
 
 // ─── Env / Config ──────────────────────────────────────────────────────────
@@ -15,16 +15,18 @@ const DEMO_MODE     = !CLIENT_ID;
 // chain: Kroger banner name (null = not a Kroger store)
 // geminiSearch: true = prices fetched via Gemini web search
 const STORES = [
-  { id: 'kroger',        name: 'Kroger',        chain: 'Kroger',        shopUrl: 'https://www.kroger.com',                          color: 'bg-blue-600',   text: 'text-blue-600'   },
-  { id: 'harris_teeter', name: 'Harris Teeter', chain: 'Harris Teeter', shopUrl: 'https://www.harristeeter.com',                    color: 'bg-green-700',  text: 'text-green-700'  },
-  { id: 'king_soopers',  name: 'King Soopers',  chain: 'King Soopers',  shopUrl: 'https://www.kingsoopers.com',                     color: 'bg-red-700',    text: 'text-red-700'    },
-  { id: 'ralphs',        name: 'Ralphs',        chain: 'Ralphs',        shopUrl: 'https://www.ralphs.com',                          color: 'bg-blue-900',   text: 'text-blue-900'   },
-  { id: 'fred_meyer',    name: 'Fred Meyer',    chain: 'Fred Meyer',    shopUrl: 'https://www.fredmeyer.com',                       color: 'bg-red-600',    text: 'text-red-600'    },
-  { id: 'smiths',        name: "Smith's",       chain: 'Smith',         shopUrl: 'https://www.smithsfoodanddrug.com',               color: 'bg-orange-600', text: 'text-orange-600' },
-  { id: 'walmart',       name: 'Walmart',       chain: null,            shopUrl: 'https://www.walmart.com/browse/food',             color: 'bg-yellow-500', text: 'text-yellow-600', geminiSearch: true },
-  { id: 'target',        name: 'Target',        chain: null,            shopUrl: 'https://www.target.com/c/food-beverage/-/N-5xt1a', color: 'bg-red-500',    text: 'text-red-500',   geminiSearch: true },
-  { id: 'costco',        name: 'Costco',        chain: null,            shopUrl: 'https://www.costco.com/grocery.html',             color: 'bg-blue-800',   text: 'text-blue-800',  geminiSearch: true },
+  { id: 'kroger',        name: 'Kroger',        chain: 'Kroger',        shopUrl: 'https://www.kroger.com',                           doordashUrl: 'https://www.doordash.com/search/store/Kroger',         color: 'bg-blue-600',   text: 'text-blue-600'   },
+  { id: 'harris_teeter', name: 'Harris Teeter', chain: 'Harris Teeter', shopUrl: 'https://www.harristeeter.com',                     doordashUrl: 'https://www.doordash.com/search/store/Harris+Teeter',  color: 'bg-green-700',  text: 'text-green-700'  },
+  { id: 'king_soopers',  name: 'King Soopers',  chain: 'King Soopers',  shopUrl: 'https://www.kingsoopers.com',                      doordashUrl: 'https://www.doordash.com/search/store/King+Soopers',   color: 'bg-red-700',    text: 'text-red-700'    },
+  { id: 'ralphs',        name: 'Ralphs',        chain: 'Ralphs',        shopUrl: 'https://www.ralphs.com',                           doordashUrl: 'https://www.doordash.com/search/store/Ralphs',         color: 'bg-blue-900',   text: 'text-blue-900'   },
+  { id: 'fred_meyer',    name: 'Fred Meyer',    chain: 'Fred Meyer',    shopUrl: 'https://www.fredmeyer.com',                        doordashUrl: 'https://www.doordash.com/search/store/Fred+Meyer',     color: 'bg-red-600',    text: 'text-red-600'    },
+  { id: 'smiths',        name: "Smith's",       chain: 'Smith',         shopUrl: 'https://www.smithsfoodanddrug.com',                doordashUrl: 'https://www.doordash.com/search/store/Smiths',         color: 'bg-orange-600', text: 'text-orange-600' },
+  { id: 'walmart',       name: 'Walmart',       chain: null,            shopUrl: 'https://www.walmart.com/browse/food',              doordashUrl: 'https://www.doordash.com/search/store/Walmart',        color: 'bg-yellow-500', text: 'text-yellow-600', geminiSearch: true },
+  { id: 'target',        name: 'Target',        chain: null,            shopUrl: 'https://www.target.com/c/food-beverage/-/N-5xt1a', doordashUrl: 'https://www.doordash.com/search/store/Target',         color: 'bg-red-500',    text: 'text-red-500',   geminiSearch: true },
+  { id: 'costco',        name: 'Costco',        chain: null,            shopUrl: 'https://www.costco.com/grocery.html',              doordashUrl: 'https://www.doordash.com/search/store/Costco',         color: 'bg-blue-800',   text: 'text-blue-800',  geminiSearch: true },
 ];
+
+const DOORDASH_FEE = 3.99;
 
 const GEMINI_SEARCH_STORES = STORES.filter(s => s.geminiSearch);
 
@@ -307,6 +309,10 @@ export default function App() {
   const [geminiKeySaved, setGeminiKeySaved]   = useState(false);
   const [showPrompts, setShowPrompts]         = useState(false);
   const [zipCity, setZipCity]                 = useState('');
+  const [profile, setProfile]                 = useState(() => {
+    try { return JSON.parse(localStorage.getItem('af_profile') || '{}'); } catch { return {}; }
+  });
+  const [profileSaved, setProfileSaved]       = useState(false);
 
   const saveGeminiKey = () => {
     localStorage.setItem('af_gemini_key', geminiKey);
@@ -373,6 +379,8 @@ export default function App() {
     setStage('approved');
     const total = selectedOption === 'single'
       ? (results.effectiveSingleTotals[bestSingleStore?.id]?.total ?? 0)
+      : selectedOption === 'doordash'
+      ? ((results.effectiveSingleTotals[bestSingleStore?.id]?.items ?? 0) + DOORDASH_FEE)
       : results.effectiveSplitTotal;
     setPastOrders(prev => [{
       id: `ord-${Date.now()}`,
@@ -391,7 +399,7 @@ export default function App() {
   const bestEffective = bestSingleStore ? (results?.effectiveSingleTotals[bestSingleStore.id] ?? null) : null;
 
   const approvedStores = results
-    ? selectedOption === 'single' && bestSingleStore
+    ? (selectedOption === 'single' || selectedOption === 'doordash') && bestSingleStore
       ? [bestSingleStore].filter(s => s?.shopUrl)
       : [...new Set(results.optimalCart.items.filter(i => i.storeId).map(i => i.storeId))]
           .map(id => STORES.find(s => s.id === id)).filter(s => s?.shopUrl)
@@ -408,7 +416,7 @@ export default function App() {
             <h1 className="text-xl font-bold tracking-tight">Aisle Five</h1>
           </div>
           <div className="flex items-center gap-1">
-            {[['shop', ShoppingCart, 'Shop'], ['history', Clock, 'History'], ['info', Info, 'Info'], ['settings', Settings, 'Settings']].map(([tab, Icon, label]) => (
+            {[['shop', ShoppingCart, 'Shop'], ['history', Clock, 'History'], ['profile', User, 'Profile'], ['info', Info, 'Info'], ['settings', Settings, 'Settings']].map(([tab, Icon, label]) => (
               <button key={tab} onClick={() => setActiveTab(tab)}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === tab ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}>
                 <Icon size={16} /><span className="hidden sm:inline">{label}</span>
@@ -490,7 +498,7 @@ export default function App() {
                 <div className="grid grid-cols-3 gap-4 text-center">
                   {[
                     { Icon: Sparkles,     label: 'AI builds your list',     sub: 'From any description' },
-                    { Icon: Store,        label: 'Live prices, 9+ sources',  sub: 'Kroger, Walmart, Target…' },
+                    { Icon: Store,        label: 'Live prices from 4 stores', sub: 'Kroger, Walmart, Target, Costco' },
                     { Icon: CheckCircle2, label: 'You approve',              sub: 'Before checkout' },
                   ].map(({ Icon, label, sub }) => (
                     <div key={label} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
@@ -605,6 +613,32 @@ export default function App() {
                       )}
                     </div>
                   </button>
+                {/* DoorDash option */}
+                {bestSingleStore && bestEffective && (
+                  <button onClick={() => setSelectedOption('doordash')}
+                    className={`w-full text-left p-6 rounded-2xl border-2 transition-all ${selectedOption === 'doordash' ? 'border-orange-500 bg-orange-50 shadow-lg shadow-orange-100' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Truck size={17} className="text-orange-500" />
+                        <span className="font-bold text-gray-600 text-sm">DoorDash Delivery</span>
+                        <span className="bg-orange-100 text-orange-600 text-xs font-bold px-2 py-0.5 rounded-full">Cheaper delivery</span>
+                      </div>
+                      {selectedOption === 'doordash' && <CheckCircle2 size={18} className="text-orange-500" />}
+                    </div>
+                    <p className="text-3xl font-black mb-1 text-orange-500">{fmt(bestEffective.items + DOORDASH_FEE)}</p>
+                    <p className="text-sm font-semibold text-gray-500">Everything from {bestSingleStore.name}, delivered via DoorDash</p>
+                    <div className="mt-3 space-y-1">
+                      <p className="text-xs text-gray-400">Items: {fmt(bestEffective.items)}</p>
+                      <p className="text-xs text-orange-600 font-semibold">+ ${DOORDASH_FEE.toFixed(2)} DoorDash delivery (free with DashPass)</p>
+                      {bestEffective.delivery > DOORDASH_FEE && (
+                        <p className="text-xs font-bold text-orange-600">
+                          Save {fmt(bestEffective.delivery - DOORDASH_FEE)} vs. native delivery
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-400">1 order · DashPass: free delivery on $15+</p>
+                    </div>
+                  </button>
+                )}
                 </div>
 
                 {/* Full price grid */}
@@ -651,7 +685,9 @@ export default function App() {
                                           {isCheapest && <span className="ml-1 text-green-500">✓</span>}
                                         </span>
                                       ) : (
-                                        <span className="text-gray-200">—</span>
+                                        store.chain
+                                          ? <span className="text-gray-400 text-xs">Data N/A</span>
+                                          : <span className="text-gray-300">—</span>
                                       )}
                                     </td>
                                   );
@@ -673,7 +709,9 @@ export default function App() {
                                         {isLowest && <span className="ml-1 text-green-500">✓</span>}
                                       </span>
                                     ) : (
-                                      <span className="text-gray-200">—</span>
+                                      store.chain
+                                        ? <span className="text-gray-400 text-xs">Data N/A</span>
+                                        : <span className="text-gray-300">—</span>
                                     )}
                                   </td>
                                 );
@@ -716,7 +754,11 @@ export default function App() {
                                 <td className="px-4 py-3 font-semibold text-gray-700">{item.name}</td>
                                 {activeStores.map(store => (
                                   <td key={store.id} className="px-3 py-3 text-gray-500 text-xs leading-snug">
-                                    {item.descriptions?.[store.id] ?? <span className="text-gray-200">—</span>}
+                                    {item.descriptions?.[store.id] ?? (
+                                      store.chain
+                                        ? <span className="text-gray-400 text-xs">Data N/A</span>
+                                        : <span className="text-gray-300">—</span>
+                                    )}
                                   </td>
                                 ))}
                               </tr>
@@ -734,7 +776,7 @@ export default function App() {
                     className="w-full bg-gray-900 disabled:bg-gray-300 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-black transition-all active:scale-[0.98] disabled:active:scale-100 shadow-2xl shadow-gray-900/20">
                     <CheckCircle2 size={22} />
                     {selectedOption
-                      ? `Approve ${selectedOption === 'single' ? 'Single Store' : 'Split Cart'} & Get Links`
+                      ? `Approve ${selectedOption === 'single' ? 'Single Store' : selectedOption === 'doordash' ? 'DoorDash Delivery' : 'Split Cart'} & Get Links`
                       : 'Select a cart option above'}
                   </button>
                   <button onClick={startNewSearch} className="w-full text-center text-gray-400 hover:text-gray-600 py-2 text-sm font-semibold transition-colors">
@@ -753,23 +795,44 @@ export default function App() {
                   <p className="text-gray-400 text-sm mb-4">
                     {selectedOption === 'single'
                       ? `Shop everything at ${bestSingleStore?.name}`
+                      : selectedOption === 'doordash'
+                      ? `Order from ${bestSingleStore?.name} via DoorDash`
                       : 'Shop each item at its cheapest store below'}
                   </p>
                   <p className="text-5xl font-black tabular-nums">
-                    {fmt(selectedOption === 'single' ? (bestEffective?.total ?? 0) : (results?.effectiveSplitTotal ?? 0))}
+                    {fmt(selectedOption === 'single'
+                      ? (bestEffective?.total ?? 0)
+                      : selectedOption === 'doordash'
+                      ? ((bestEffective?.items ?? 0) + DOORDASH_FEE)
+                      : (results?.effectiveSplitTotal ?? 0))}
+                  </p>
+                  <p className="text-green-400 text-sm font-semibold mt-4">
+                    Cart approved — charging your payment information on file.
                   </p>
                 </div>
                 <div className="space-y-3">
-                  {approvedStores.map(store => (
-                    <a key={store.id} href={store.shopUrl} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center justify-between bg-white border border-gray-200 hover:border-blue-300 rounded-2xl px-6 py-5 font-bold text-lg transition-all hover:shadow-md group">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${store.color}`} />
-                        Shop {store.name}
-                      </div>
-                      <ExternalLink size={18} className="text-gray-400 group-hover:text-blue-500 transition-colors" />
-                    </a>
-                  ))}
+                  {selectedOption === 'doordash'
+                    ? approvedStores.map(store => (
+                        <a key={store.id} href={store.doordashUrl || 'https://www.doordash.com/grocery/'} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center justify-between bg-orange-50 border border-orange-200 hover:border-orange-400 rounded-2xl px-6 py-5 font-bold text-lg transition-all hover:shadow-md group">
+                          <div className="flex items-center gap-3">
+                            <Truck size={18} className="text-orange-500" />
+                            Order {store.name} on DoorDash
+                          </div>
+                          <ExternalLink size={18} className="text-orange-300 group-hover:text-orange-500 transition-colors" />
+                        </a>
+                      ))
+                    : approvedStores.map(store => (
+                        <a key={store.id} href={store.shopUrl} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center justify-between bg-white border border-gray-200 hover:border-blue-300 rounded-2xl px-6 py-5 font-bold text-lg transition-all hover:shadow-md group">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full ${store.color}`} />
+                            Shop {store.name}
+                          </div>
+                          <ExternalLink size={18} className="text-gray-400 group-hover:text-blue-500 transition-colors" />
+                        </a>
+                      ))
+                  }
                 </div>
                 <button onClick={startNewSearch}
                   className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
@@ -850,6 +913,115 @@ export default function App() {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {/* ── Profile Tab ── */}
+        {activeTab === 'profile' && (
+          <div className="animate-in fade-in duration-500 space-y-6">
+            <h2 className="text-2xl font-bold">Profile</h2>
+
+            {/* Delivery Address */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+                <MapPin size={16} className="text-blue-500" />
+                <p className="font-bold text-gray-800">Delivery Address</p>
+              </div>
+              <div className="px-6 py-5 grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Full Name</label>
+                  <input type="text" value={profile.name || ''} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))}
+                    placeholder="Jason Hou"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Street Address</label>
+                  <input type="text" value={profile.street || ''} onChange={e => setProfile(p => ({ ...p, street: e.target.value }))}
+                    placeholder="123 Main St"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Apt / Suite (optional)</label>
+                  <input type="text" value={profile.apt || ''} onChange={e => setProfile(p => ({ ...p, apt: e.target.value }))}
+                    placeholder="Apt 4B"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-1">
+                    <label className="block text-xs font-bold text-gray-500 mb-1">City</label>
+                    <input type="text" value={profile.city || ''} onChange={e => setProfile(p => ({ ...p, city: e.target.value }))}
+                      placeholder="Somerville"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">State</label>
+                    <input type="text" value={profile.state || ''} onChange={e => setProfile(p => ({ ...p, state: e.target.value.slice(0, 2).toUpperCase() }))}
+                      placeholder="MA" maxLength={2}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">ZIP</label>
+                    <input type="text" value={profile.zip || ''} onChange={e => setProfile(p => ({ ...p, zip: e.target.value.replace(/\D/g, '').slice(0, 5) }))}
+                      placeholder="02144" maxLength={5}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Information */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+                <CreditCard size={16} className="text-blue-500" />
+                <p className="font-bold text-gray-800">Payment Information</p>
+              </div>
+              <div className="px-6 py-5 grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Cardholder Name</label>
+                  <input type="text" value={profile.cardName || ''} onChange={e => setProfile(p => ({ ...p, cardName: e.target.value }))}
+                    placeholder="Jason Hou"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Card Number</label>
+                  <input type="text" value={profile.cardNumber || ''} onChange={e => setProfile(p => ({ ...p, cardNumber: e.target.value.replace(/\D/g, '').slice(0, 16) }))}
+                    placeholder="•••• •••• •••• ••••"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono tracking-widest" />
+                  {profile.cardNumber?.length === 16 && (
+                    <p className="text-xs text-gray-400 mt-1">Ending in {profile.cardNumber.slice(-4)}</p>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Expiry Date</label>
+                    <input type="text" value={profile.expiry || ''} onChange={e => {
+                      let v = e.target.value.replace(/\D/g, '').slice(0, 4);
+                      if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
+                      setProfile(p => ({ ...p, expiry: v }));
+                    }}
+                      placeholder="MM/YY" maxLength={5}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">CVV</label>
+                    <input type="password" value={profile.cvv || ''} onChange={e => setProfile(p => ({ ...p, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                      placeholder="•••"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button onClick={() => {
+              localStorage.setItem('af_profile', JSON.stringify(profile));
+              setProfileSaved(true);
+              setTimeout(() => setProfileSaved(false), 2000);
+            }}
+              className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+              {profileSaved ? <><CheckCircle2 size={20} /> Saved!</> : <><User size={20} /> Save Profile</>}
+            </button>
+
+            <p className="text-xs text-center text-gray-400">Your information is stored locally in your browser and never sent to any server.</p>
           </div>
         )}
 
