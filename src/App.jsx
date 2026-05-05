@@ -891,6 +891,10 @@ export default function App() {
           <div className="animate-in fade-in duration-500 space-y-6">
             <h2 className="text-2xl font-bold">About This Tool</h2>
 
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-700">
+              <span className="font-bold">Disclaimer:</span> included for the purposes of assignment submission and ease of review. Would be removed in the fully deployed version.
+            </div>
+
             {/* Data accuracy */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
@@ -1029,6 +1033,11 @@ export default function App() {
         {activeTab === 'settings' && (
           <div className="animate-in fade-in duration-500 space-y-6">
             <h2 className="text-2xl font-bold">Settings</h2>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-700">
+              <span className="font-bold">Disclaimer:</span> included for the purposes of assignment submission and ease of review. Would be removed in the fully deployed version.
+            </div>
+
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
               <div>
