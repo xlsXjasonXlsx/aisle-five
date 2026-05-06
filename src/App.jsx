@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   ShoppingCart, Search, Settings, CheckCircle2, TrendingDown, Store,
   ExternalLink, MapPin, AlertCircle, RefreshCw, Clock, Sparkles, WifiOff,
-  Info, Truck, ChevronDown, ChevronUp, User, CreditCard,
+  Info, Truck, ChevronDown, ChevronUp, User, CreditCard, ShoppingBag,
 } from 'lucide-react';
 
 // ─── Env / Config ──────────────────────────────────────────────────────────
@@ -301,6 +301,7 @@ export default function App() {
   const [results, setResults]                 = useState(null);
   const [aiRec, setAiRec]                     = useState('');
   const [bestSingleStore, setBestSingleStore] = useState(null);
+  const [bestPickupStore, setBestPickupStore] = useState(null);
   const [selectedOption, setSelectedOption]   = useState(null);
   const [apiError, setApiError]               = useState('');
   const [pastOrders, setPastOrders]           = useState(INITIAL_PAST_ORDERS);
@@ -351,6 +352,11 @@ export default function App() {
       const bestStore = STORES.find(s => s.id === bestStoreId) ?? null;
       setBestSingleStore(bestStore);
 
+      // Pick best pickup store by raw items total (no delivery)
+      const pickupEntries = Object.entries(data.singleStoreTotals).sort((a, b) => a[1] - b[1]);
+      const [bestPickupStoreId] = pickupEntries[0] ?? [null];
+      setBestPickupStore(STORES.find(s => s.id === bestPickupStoreId) ?? null);
+
       if (geminiKey && bestStore) {
         setLoadingStep('Analyzing your options with AI...');
         const best = data.effectiveSingleTotals[bestStoreId];
@@ -381,6 +387,8 @@ export default function App() {
       ? (results.effectiveSingleTotals[bestSingleStore?.id]?.total ?? 0)
       : selectedOption === 'doordash'
       ? ((results.effectiveSingleTotals[bestSingleStore?.id]?.items ?? 0) + DOORDASH_FEE)
+      : selectedOption === 'pickup'
+      ? (results.singleStoreTotals[bestPickupStore?.id] ?? 0)
       : results.effectiveSplitTotal;
     setPastOrders(prev => [{
       id: `ord-${Date.now()}`,
@@ -392,6 +400,7 @@ export default function App() {
   const startNewSearch = () => {
     setStage('input'); setPrompt(''); setResults(null);
     setShoppingList([]); setAiRec(''); setSelectedOption(null); setApiError('');
+    setBestPickupStore(null);
   };
 
   const fmt = n => `$${Number(n).toFixed(2)}`;
@@ -401,6 +410,8 @@ export default function App() {
   const approvedStores = results
     ? (selectedOption === 'single' || selectedOption === 'doordash') && bestSingleStore
       ? [bestSingleStore].filter(s => s?.shopUrl)
+      : selectedOption === 'pickup' && bestPickupStore
+      ? [bestPickupStore].filter(s => s?.shopUrl)
       : [...new Set(results.optimalCart.items.filter(i => i.storeId).map(i => i.storeId))]
           .map(id => STORES.find(s => s.id === id)).filter(s => s?.shopUrl)
     : [];
@@ -639,6 +650,32 @@ export default function App() {
                     </div>
                   </button>
                 )}
+
+                {/* In-Store Pickup option */}
+                {bestPickupStore && results.singleStoreTotals[bestPickupStore.id] != null && (
+                  <button onClick={() => setSelectedOption('pickup')}
+                    className={`w-full text-left p-6 rounded-2xl border-2 transition-all ${selectedOption === 'pickup' ? 'border-purple-600 bg-purple-50 shadow-lg shadow-purple-100' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <ShoppingBag size={17} className="text-purple-600" />
+                        <span className="font-bold text-gray-600 text-sm">In-Store Pickup</span>
+                        <span className="bg-purple-100 text-purple-600 text-xs font-bold px-2 py-0.5 rounded-full">No delivery fee</span>
+                      </div>
+                      {selectedOption === 'pickup' && <CheckCircle2 size={18} className="text-purple-600" />}
+                    </div>
+                    <p className="text-3xl font-black mb-1 text-purple-600">{fmt(results.singleStoreTotals[bestPickupStore.id])}</p>
+                    <p className="text-sm font-semibold text-gray-500">Pick up everything at {bestPickupStore.name}</p>
+                    <div className="mt-3 space-y-1">
+                      <p className="text-xs text-purple-600 font-semibold">✓ No delivery fee</p>
+                      {results.effectiveSingleTotals[bestPickupStore.id] && results.effectiveSingleTotals[bestPickupStore.id].delivery > 0 && (
+                        <p className="text-xs font-bold text-purple-600">
+                          Save {fmt(results.effectiveSingleTotals[bestPickupStore.id].delivery)} vs. home delivery
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-400">1 store · bring your own bags</p>
+                    </div>
+                  </button>
+                )}
                 </div>
 
                 {/* Full price grid */}
@@ -801,7 +838,7 @@ export default function App() {
                     className="w-full bg-gray-900 disabled:bg-gray-300 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:bg-black transition-all active:scale-[0.98] disabled:active:scale-100 shadow-2xl shadow-gray-900/20">
                     <CheckCircle2 size={22} />
                     {selectedOption
-                      ? `Approve ${selectedOption === 'single' ? 'Single Store' : selectedOption === 'doordash' ? 'DoorDash Delivery' : 'Split Cart'} & Get Links`
+                      ? `Approve ${selectedOption === 'single' ? 'Single Store' : selectedOption === 'doordash' ? 'DoorDash Delivery' : selectedOption === 'pickup' ? 'In-Store Pickup' : 'Split Cart'} & Get Links`
                       : 'Select a cart option above'}
                   </button>
                   <button onClick={startNewSearch} className="w-full text-center text-gray-400 hover:text-gray-600 py-2 text-sm font-semibold transition-colors">
@@ -822,6 +859,8 @@ export default function App() {
                       ? `Shop everything at ${bestSingleStore?.name}`
                       : selectedOption === 'doordash'
                       ? `Order from ${bestSingleStore?.name} via DoorDash`
+                      : selectedOption === 'pickup'
+                      ? `Pick up everything at ${bestPickupStore?.name}`
                       : 'Shop each item at its cheapest store below'}
                   </p>
                   <p className="text-5xl font-black tabular-nums">
@@ -829,6 +868,8 @@ export default function App() {
                       ? (bestEffective?.total ?? 0)
                       : selectedOption === 'doordash'
                       ? ((bestEffective?.items ?? 0) + DOORDASH_FEE)
+                      : selectedOption === 'pickup'
+                      ? (results?.singleStoreTotals[bestPickupStore?.id] ?? 0)
                       : (results?.effectiveSplitTotal ?? 0))}
                   </p>
                   <p className="text-green-400 text-sm font-semibold mt-4">
@@ -845,6 +886,17 @@ export default function App() {
                             Order {store.name} on DoorDash
                           </div>
                           <ExternalLink size={18} className="text-orange-300 group-hover:text-orange-500 transition-colors" />
+                        </a>
+                      ))
+                    : selectedOption === 'pickup'
+                    ? approvedStores.map(store => (
+                        <a key={store.id} href={store.shopUrl} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center justify-between bg-purple-50 border border-purple-200 hover:border-purple-400 rounded-2xl px-6 py-5 font-bold text-lg transition-all hover:shadow-md group">
+                          <div className="flex items-center gap-3">
+                            <ShoppingBag size={18} className="text-purple-600" />
+                            Pick up at {store.name}
+                          </div>
+                          <ExternalLink size={18} className="text-purple-300 group-hover:text-purple-500 transition-colors" />
                         </a>
                       ))
                     : approvedStores.map(store => (
