@@ -653,7 +653,7 @@ export default function App() {
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                       <div className="px-6 py-4 border-b border-gray-100">
                         <p className="font-bold text-gray-800">Price Breakdown by Item & Store</p>
-                        <p className="text-xs text-gray-400 mt-0.5">Green = cheapest for that item · Total row includes delivery fee</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Green = cheapest for that item</p>
                       </div>
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
@@ -697,6 +697,36 @@ export default function App() {
                           </tbody>
                           <tfoot>
                             <tr className="border-t-2 border-gray-200 bg-gray-50">
+                              <td className="px-4 py-3 font-semibold text-gray-600 text-sm">Groceries</td>
+                              {activeStores.map(store => {
+                                const effective = results.effectiveSingleTotals[store.id];
+                                return (
+                                  <td key={store.id} className="px-3 py-3 text-center">
+                                    {effective != null
+                                      ? <span className="font-semibold text-gray-700">{fmt(effective.items)}</span>
+                                      : <span className="text-gray-400 text-xs">Data N/A</span>}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                            <tr className="bg-gray-50">
+                              <td className="px-4 py-3 font-semibold text-gray-600 text-sm">Delivery</td>
+                              {activeStores.map(store => {
+                                const effective = results.effectiveSingleTotals[store.id];
+                                return (
+                                  <td key={store.id} className="px-3 py-3 text-center">
+                                    {effective != null ? (
+                                      effective.delivery > 0
+                                        ? <span className="font-semibold text-amber-600">{fmt(effective.delivery)}</span>
+                                        : <span className="font-semibold text-green-600">Free</span>
+                                    ) : (
+                                      <span className="text-gray-400 text-xs">Data N/A</span>
+                                    )}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                            <tr className="border-t border-gray-200 bg-gray-100">
                               <td className="px-4 py-3 font-black text-gray-900">Total</td>
                               {activeStores.map(store => {
                                 const effective = results.effectiveSingleTotals[store.id];
@@ -707,9 +737,6 @@ export default function App() {
                                     {total != null ? (
                                       <span className={`font-black ${isLowest ? 'text-green-600' : 'text-gray-700'}`}>
                                         {fmt(total)}
-                                        {effective.delivery > 0 && (
-                                          <span className="block text-xs font-normal text-amber-600">+{fmt(effective.delivery)} del.</span>
-                                        )}
                                         {isLowest && <span className="ml-1 text-green-500">✓</span>}
                                       </span>
                                     ) : (
