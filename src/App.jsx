@@ -687,9 +687,7 @@ export default function App() {
                                           {isCheapest && <span className="ml-1 text-green-500">✓</span>}
                                         </span>
                                       ) : (
-                                        store.chain
-                                          ? <span className="text-gray-400 text-xs">Data N/A</span>
-                                          : <span className="text-gray-300">—</span>
+                                        <span className="text-gray-400 text-xs">Data N/A</span>
                                       )}
                                     </td>
                                   );
@@ -715,7 +713,7 @@ export default function App() {
                                         {isLowest && <span className="ml-1 text-green-500">✓</span>}
                                       </span>
                                     ) : (
-                                      <span className="text-gray-300">—</span>
+                                      <span className="text-gray-400 text-xs">Data N/A</span>
                                     )}
                                   </td>
                                 );
@@ -758,11 +756,7 @@ export default function App() {
                                 <td className="px-4 py-3 font-semibold text-gray-700">{item.name}</td>
                                 {activeStores.map(store => (
                                   <td key={store.id} className="px-3 py-3 text-gray-500 text-xs leading-snug">
-                                    {item.descriptions?.[store.id] ?? (
-                                      store.chain
-                                        ? <span className="text-gray-400 text-xs">Data N/A</span>
-                                        : <span className="text-gray-300">—</span>
-                                    )}
+                                    {item.descriptions?.[store.id] ?? <span className="text-gray-400 text-xs">Data N/A</span>}
                                   </td>
                                 ))}
                               </tr>
