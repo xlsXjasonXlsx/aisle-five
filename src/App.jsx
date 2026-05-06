@@ -305,7 +305,7 @@ export default function App() {
   const [apiError, setApiError]               = useState('');
   const [pastOrders, setPastOrders]           = useState(INITIAL_PAST_ORDERS);
   const [expandedOrders, setExpandedOrders]   = useState([]);
-  const [geminiKey, setGeminiKey]             = useState(() => localStorage.getItem('af_gemini_key') || '');
+  const [geminiKey, setGeminiKey]             = useState(() => import.meta.env.VITE_GEMINI_KEY || localStorage.getItem('af_gemini_key') || '');
   const [geminiKeySaved, setGeminiKeySaved]   = useState(false);
   const [showPrompts, setShowPrompts]         = useState(false);
   const [zipCity, setZipCity]                 = useState('');
@@ -1043,17 +1043,11 @@ export default function App() {
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Gemini API Key</label>
                 <p className="text-xs text-gray-400 mb-3">
-                  Powers AI list generation, web price search (Walmart, Target, Costco), and cart recommendations. Get a free key at aistudio.google.com → Get API key.
+                  Powers AI list generation, web price search (Walmart, Target, Costco), and cart recommendations.
                 </p>
-                <div className="flex gap-3">
-                  <input type="password" value={geminiKey} onChange={e => setGeminiKey(e.target.value)}
-                    placeholder="AIza..."
-                    className="flex-1 px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm" />
-                  <button onClick={saveGeminiKey}
-                    className="bg-blue-600 text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition-all min-w-[80px]">
-                    {geminiKeySaved ? '✓ Saved' : 'Save'}
-                  </button>
-                </div>
+                <input type="password" value={geminiKey} readOnly
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 font-mono text-sm text-gray-500 cursor-default" />
+                <p className="text-xs text-green-600 font-semibold mt-2">✓ Configured</p>
               </div>
             </div>
 
