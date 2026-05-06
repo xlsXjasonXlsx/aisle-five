@@ -646,12 +646,14 @@ export default function App() {
                   const activeStores = STORES.filter(s =>
                     results.optimalCart.items.some(item => item.allPrices?.[s.id] != null)
                   );
-                  const lowestTotal = Math.min(...Object.values(results.singleStoreTotals));
+                  const lowestEffective = Object.values(results.effectiveSingleTotals).length > 0
+                    ? Math.min(...Object.values(results.effectiveSingleTotals).map(e => e.total))
+                    : Infinity;
                   return (
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                       <div className="px-6 py-4 border-b border-gray-100">
                         <p className="font-bold text-gray-800">Price Breakdown by Item & Store</p>
-                        <p className="text-xs text-gray-400 mt-0.5">Green = cheapest for that item</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Green = cheapest for that item · Total row includes delivery fee</p>
                       </div>
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
@@ -699,19 +701,21 @@ export default function App() {
                             <tr className="border-t-2 border-gray-200 bg-gray-50">
                               <td className="px-4 py-3 font-black text-gray-900">Total</td>
                               {activeStores.map(store => {
-                                const total = results.singleStoreTotals[store.id];
-                                const isLowest = total != null && total === lowestTotal;
+                                const effective = results.effectiveSingleTotals[store.id];
+                                const total = effective?.total ?? null;
+                                const isLowest = total != null && total === lowestEffective;
                                 return (
                                   <td key={store.id} className="px-3 py-3 text-center">
                                     {total != null ? (
                                       <span className={`font-black ${isLowest ? 'text-green-600' : 'text-gray-700'}`}>
                                         {fmt(total)}
+                                        {effective.delivery > 0 && (
+                                          <span className="block text-xs font-normal text-amber-600">+{fmt(effective.delivery)} del.</span>
+                                        )}
                                         {isLowest && <span className="ml-1 text-green-500">✓</span>}
                                       </span>
                                     ) : (
-                                      store.chain
-                                        ? <span className="text-gray-400 text-xs">Data N/A</span>
-                                        : <span className="text-gray-300">—</span>
+                                      <span className="text-gray-300">—</span>
                                     )}
                                   </td>
                                 );
